@@ -13,7 +13,37 @@ Ejecutar el análisis:
 python analisis_morbilidad.py
 
 Subir tu Código
-Asegúrate de que tu código fuente esté en la carpeta del proyecto. Luego, sigue estos pasos en tu terminal:
+
+from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.types import IntegerType
+
+# Inicializa la sesión de Spark
+spark = SparkSession.builder.appName('Tarea3').getOrCreate()
+
+# Define la ruta del archivo .csv en HDFS
+file_path = 'hdfs://localhost:9000/Tarea3/rows.csv.3'
+df = spark.read.format('csv').option('header', 'true').option('inferSchema', 'true').load(file_path)
+
+# Limpieza y transformación de datos
+df = df.dropna()
+df = df.withColumn('EDAD DE ATENCION (AÑOS)', F.col('EDAD DE ATENCION (AÑOS)').cast(IntegerType()))
+
+# Análisis exploratorio de datos (EDA)
+df.printSchema()
+df.show()
+df.summary().show()
+
+# Filtrar y seleccionar columnas
+dias = df.filter(F.col('EDAD DE ATENCION (AÑOS)') > 50).select('EDAD DE ATENCION (AÑOS)', 'NOMBRE DEL DIAGNOSTICO', 'AÑO REPORTADO')
+dias.show()
+
+# Ordenar filas por los valores en la columna "EDAD DE ATENCION (AÑOS)" en orden descendente
+sorted_df = df.sort(F.col('EDAD DE ATENCION (AÑOS)').desc())
+sorted_df.show()
+
+# Almacenar los resultados procesados
+output_path = 'hdfs://localhost:9000/Tarea3/processed_data'
+sorted_df.write.format('csv').option('header', 'true').save(output_path)
 
 1. 
 Inicializar el repositorio:
